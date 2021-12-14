@@ -341,11 +341,7 @@ class Deployment:
         else:
             self.name = str(name)
         
-        self.to_remove = 0
-        
-        self.nr_dead = 0 # Number of dead tasks
-        self.nr_done = 0 # number of done tasks
-        self.nr_err5xx = 0 # number of 5xx errors
+        self.reset()
         
         self.tasks = []    
         self.pods = []
@@ -362,6 +358,12 @@ class Deployment:
         
         for i in range(starting_pods):
             self.addPod()
+        
+    def reset(self):
+        self.to_remove = 0     
+        self.nr_dead = 0 # Number of dead tasks
+        self.nr_done = 0 # number of done tasks
+        self.nr_err5xx = 0 # number of 5xx errors       
         
         
     def addPod(self):
@@ -395,7 +397,7 @@ class Deployment:
                     self.to_remove -= 1
                     
         ### Remove unwanted pods
-        for r in to_remove_list:
+        for r in to_remove_list[::-1]:
             if len(self.pods) > 1:
                 self.pods.pop(r)
         
@@ -510,9 +512,14 @@ class SimpleCluster:
                 cpu_base = 5,
                 memory_base = 5,
             ))
+
+        self.reset()
         
+    def reset(self):
         self.nr_tasks = 0
         self.nr_done = 0
+        for deployment in self.deployments:
+            deployment.reset()
         
         
     def addTasks(self, nr_tasks, life_time = 1e6):
@@ -544,6 +551,8 @@ class SimpleCluster:
             res.append(deployment.getMetrics())
         return res
 
+    
+    
     
     def updateDeployments(self, actions):
         """
